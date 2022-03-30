@@ -1,5 +1,6 @@
 """
 Rebalancing: SOXL/TQQQ and Cash
+apply fee, tax
 """
 
 import pandas as pd
