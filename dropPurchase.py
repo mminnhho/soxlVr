@@ -9,12 +9,14 @@ import pandas as pd
 
 ticker = 'TQQQ'
 cashFlow = 500
-dropP = [(1/100) * x for x in range(1,11)]  # drop percent
-buyP = [(1/100) * x for x in range(50,101)]  # buy percent
+dropP = [(1/100) * x for x in range(1,20,2)]  # drop percent
+buyP = [(1/100) * x for x in range(100,50,-5)]  # buy percent
 
 dfO = pd.DataFrame(columns=['date', 'price', 'amount', 'cash', 'balance', 'capital'])
 
 df = pd.read_csv(ticker + '.csv')
+
+lO = []
 
 for x in dropP:
 	for y in buyP:
@@ -61,6 +63,9 @@ for x in dropP:
 
 				previousMonth = pd.Period(sr[0], freq='M')
 
-		# dfO.to_csv(ticker + '_dropPurchase.csv', index=False)
 		srO = dfO.iloc[-1]
-		print("%4.1f"%(float(srO[4]) / float(srO[5])))
+		lO.append("%4.1f"%(float(srO[4]) / float(srO[5])))
+		# print(x, y)
+		print("%4.2f"%(x), "%4.2f"%(y))
+		print(max(lO))
+		print()
