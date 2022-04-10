@@ -83,9 +83,9 @@ def rebalancing():
     """
     multiplying amount. test virtual asset
     """
-    vA = [(1/10) * x for x in range(23,26)] # percentage of tkrA
-    perA = [(1/100) * x for x in range(77,80)] # percentage of tkrA
-    thr = [(1/100) * x for x in range(9,12)]  # rebalancing threshold
+    vA = [(1/10) * x for x in range(15,26)] # percentage of tkrA
+    perA = [(1/100) * x for x in range(48,68)] # percentage of tkrA
+    thr = [(1/100) * x for x in range(5,16)]  # rebalancing threshold
     # perA = [(1/200) * x for x in range(154,159)] # percentage of tkrA
     # thr = [(1/200) * x for x in range(16,21)]  # rebalancing threshold
     # perA = [0.82]
