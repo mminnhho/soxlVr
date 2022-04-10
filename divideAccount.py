@@ -1,4 +1,5 @@
 """
+swing
 divide account
 1st step
 print - previous high, bid price, ask price
@@ -7,8 +8,8 @@ print - previous high, bid price, ask price
 import pandas as pd
 
 ticker = "TQQQ"
-iBpP = [(1/100) * x for x in range(3,4)]  # initial bid price
-gap =  [(1/100) * x for x in range(5,6)]  # gap between bid price
+iBpP = [(1/100) * x for x in range(3,4)]  # initial bid price percent
+gap =  [(1/100) * x for x in range(5,6)]  # gap between bid price percent
 aPp =  [(1/100) * x for x in range(1,2)]  # ask price percent compared to previous bid price
 nA =   30    # number of account
 
@@ -36,7 +37,6 @@ for x in iBpP:
 			bP = [0] * nA  # bid price
 			aF = [0] * nA  # account flag
 			aP = [0] * nA  # ask price
-			aB = [1] * nA  # account balance
 			aB = [1] * nA  # account balance
 			cT = [0] * nA  # count of trades
 			pH = 0         # previous high

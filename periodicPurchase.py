@@ -1,6 +1,7 @@
 """
-periodic purchase TICKER
+buy and hold
 cost averaging
+periodic purchase TICKER
 cumulative rate x42
 monthly average rate 1.97%
 """

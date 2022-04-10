@@ -1,5 +1,7 @@
 """
-drop then purchase TICKER
+buy and hold
+cost averaging
+drop then purchase TICKER (vs periodic purchase)
 cost averaging
 cumulative rate x00
 monthly average rate 0.00%
