@@ -1,5 +1,8 @@
 """
-Rebalancing: SOXL/TQQQ and Cash
+Rebalancing: TQQQ/SOXL and Cash
+best result: TQQQ, Cash 89:11 10% X148 -> rarely trades
+considerable: TQQQ, Cash 90:10 1% x96
+IMPORTANT: stock holdings are DECREASED !!!
 """
 
 import pandas as pd
@@ -7,9 +10,9 @@ import pandas as pd
 
 ticker = "TQQQ"
 capital = 10000
-proportion = [(1/100) * x for x in range(51,91)]  # percentage of ticker
-threshold = [(1/100) * x for x in range(1,10)]  # rebalancing threshold
-aW = [(1/10) * x for x in range(10,21)]  # amount weight
+proportion = [(1/100) * x for x in range(90,91)]  # percentage of ticker
+threshold = [(1/100) * x for x in range(1,2)]  # rebalancing threshold
+aW = [(1/10) * x for x in range(10,11)]  # amount weight
 fee = 0.0007   # trade fee
 
 trade_log = (len(proportion) == 1) and (len(threshold) == 1)

@@ -1,7 +1,9 @@
 """
 rebalancing: S&P500 Leverage, Dollar Leverage / only date
-rebalancing: TQQQ, SOXL
-rebalancing: TQQQ, TMF / 2010~2022 2.4 78:22 10% x302 / Wow !!!
+rebalancing: TQQQ, SOXL, TMF
+best result: TQQQ, TMF 2.4 78:22 10% x302
+conderable: TQQQ, TMF 1.0 89:11 2% x134
+IMPORTANT: stock holdings are increased !!!
 """
 
 
@@ -83,7 +85,7 @@ def rebalancing():
     """
     multiplying amount. test virtual asset
     """
-    vA = [(1/10) * x for x in range(10,11)] # percentage of tkrA
+    vA = [(1/10) * x for x in range(10,11)] # percentage of virtual asset
     perA = [(1/100) * x for x in range(89,90)] # percentage of tkrA
     thr = [(1/100) * x for x in range(2,3)]  # rebalancing threshold
     # perA = [(1/200) * x for x in range(154,159)] # percentage of tkrA
@@ -137,7 +139,8 @@ def rebalancing():
 
                         if log:
                             print(srA[0], end=',')
-                            print(int(balStckA * srA[cls]),',',int(balStckB * srB[cls]),',',int(balA + balB + balCsh))
+                            # print(int(balStckA * srA[cls]),',',int(balStckB * srB[cls]),',',int(balA + balB + balCsh))
+                            print(int(balStckA),',',int(balStckB),',',int(balA + balB + balCsh))
 
                     elif ((balB/bal)-perB) > y:
                         amtB = ((balB-(bal*perB)) // srB[cls]) + 1 # selling amount
@@ -153,7 +156,8 @@ def rebalancing():
 
                         if log:
                             print(srA[0], end=', ')
-                            print(int(balStckA * srA[cls]),',',int(balStckB * srB[cls]),',',int(balA + balB + balCsh))
+                            # print(int(balStckA * srA[cls]),',',int(balStckB * srB[cls]),',',int(balA + balB + balCsh))
+                            print(int(balStckA),',',int(balStckB),',',int(balA + balB + balCsh))
 
                     else:
                         pass
