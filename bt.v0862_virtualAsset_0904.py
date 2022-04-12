@@ -3,7 +3,7 @@ rebalancing: S&P500 Leverage, Dollar Leverage / only date
 rebalancing: TQQQ, SOXL, TMF
 best result: TQQQ, TMF 2.4 78:22 10% x302
 conderable: TQQQ, TMF 1.0 89:11 2% x134
-IMPORTANT: stock holdings are increased !!!
+IMPORTANT: stock holdings are INCREASED !!!
 """
 
 
@@ -85,9 +85,9 @@ def rebalancing():
     """
     multiplying amount. test virtual asset
     """
-    vA = [(1/10) * x for x in range(10,11)] # percentage of virtual asset
+    vA = [(1/10) * x for x in range(15,16)] # percentage of virtual asset
     perA = [(1/100) * x for x in range(89,90)] # percentage of tkrA
-    thr = [(1/100) * x for x in range(2,3)]  # rebalancing threshold
+    thr = [(1/100) * x for x in range(5,6)]  # rebalancing threshold
     # perA = [(1/200) * x for x in range(154,159)] # percentage of tkrA
     # thr = [(1/200) * x for x in range(16,21)]  # rebalancing threshold
     # perA = [0.82]
@@ -112,6 +112,7 @@ def rebalancing():
                 srA = dfA.iloc[0] # first row
                 balStckA = (inv*x) // srA[cls] # close price, bought price
                 balCsh += ((inv*x) % srA[cls]) # changes
+                
                 srB = dfB.iloc[0] # first row
                 balStckB = (inv*perB) // srB[cls] # close price, bought price
                 balCsh += ((inv*perB) % srB[cls]) # changes
