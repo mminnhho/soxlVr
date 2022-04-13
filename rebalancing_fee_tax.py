@@ -4,7 +4,7 @@ fee 0.07 %
 tax 20 + 2 %
 when no fee, no tax: 2010-2022 1.0 89:11 2% x134 (max x196 55.2%Y)
 noticeable: 2010-2022 1.5 89:11 5% x166 (max x207 55.9%Y)
-rebalancing twice a day: open, close price
+rebalancing price: (open + close) / 2
 """
 
 import pandas as pd
@@ -60,7 +60,7 @@ def rebal(tickerA, tickerB):
 
     virtualAsset = [(1/10) * x for x in range(7, 8)]
     proportionA = [(1/100) * x for x in range(94, 95)]
-    threshold = [(1/100) * x for x in range(2, 3)]
+    threshold = [(1/100) * x for x in range(2, 4)]
 
     # log = (len(virtualAsset) == 1) and (len(proportionA) == 1) and (len(threshold) == 1)
     log = False
@@ -72,7 +72,6 @@ def rebal(tickerA, tickerB):
 
             for t in threshold:
 
-                # if log:
                 print("%4.2f %4.2f %4.2f" % (a, p, t))
                 print()
 
@@ -89,17 +88,21 @@ def rebal(tickerA, tickerB):
                 dfBuyA = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[stockBalanceA]})
                 dfBuyB = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[stockBalanceB]})
                 
-                dfSellA = pd.DataFrame(columns = ['date', 'price', 'amount', 'buyDate', 'buyPrice', 'profit'])
-                dfSellB = pd.DataFrame(columns = ['date', 'price', 'amount', 'buyDate', 'buyPrice', 'profit'])
+                dfSellA = pd.DataFrame(columns = ['date', 'price', 'amount', 'buyDate', 'buyPrice', 'revenue'])
+                dfSellB = dfSellA
+
+                dfTaxA = pd.DataFrame(columns = ['year', 'revenue', 'tax', 'profit'])
+                dfTaxB = dfTaxA
 
                 flagA = 0
                 flagB = 0
                 remainA = 0
                 remainB = 0
+                revenueA = 0
+                revenueB = 0
 
                 onceA = True
                 onceB = True
-
 
                 for i in range(1, len(dfA)):
 
@@ -111,6 +114,10 @@ def rebal(tickerA, tickerB):
                     balanceB = priceB * stockBalanceB
                     balance = balanceA + balanceB + cashBalance
 
+                    if i == 1:
+                        previousPeriodA = (pd.Period(srA[0], freq='Y'))
+                        previousPeriodB = (pd.Period(srB[0], freq='Y'))
+
                     if ((balanceA / balance) - p) > t:
                         amountA = ((balanceA - (balance * p)) // priceA) + 1
                         amountA *= a
@@ -119,7 +126,7 @@ def rebal(tickerA, tickerB):
                         if amountA > stockBalanceA:
                             amountA = stockBalanceA
 
-                        stockBalanceA -= amountA  ################################################################################################################################################## sell tickerA
+                        stockBalanceA -= amountA  ######################################## sell tickerA
 
                         if onceA:
                             srBuyA = dfBuyA.iloc[flagA]
@@ -127,71 +134,63 @@ def rebal(tickerA, tickerB):
                             onceA = False
 
                         if amountA < remainA:
-                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'profit':[(priceA - srBuyA[1]) * amountA]})  # tax
-                            dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
+                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'revenue':[(priceA - srBuyA[1]) * amountA]})
+                            dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
                             remainA -= amountA
-
-                            print(tickerA)
-                            print(dfSellA)
-                            print(remainA)
-                            print()
+                            revenueA += (priceA - srBuyA[1]) * amountA
 
                         elif amountA == remainA:
-                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'profit':[(priceA - srBuyA[1]) * amountA]})  # tax
-                            dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
+                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'revenue':[(priceA - srBuyA[1]) * amountA]})
+                            dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
                             remainA = 0
                             flagA += 1
-
-                            print(tickerA)
-                            print(dfSellA)
-                            print(remainA)
-                            print()
+                            revenueA += (priceA - srBuyA[1]) * amountA
 
                         else:
                             while amountA > remainA:
-                                dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[remainA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'profit':[(priceA - srBuyA[1]) * remainA]})  # tax
-                                dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
-
+                                dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[remainA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'revenue':[(priceA - srBuyA[1]) * remainA]})
+                                dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
                                 amountA -= remainA
-
                                 flagA += 1
                                 srBuyA = dfBuyA.iloc[flagA]
                                 remainA = srBuyA[2]
-
-                                print(tickerA)
-                                print(dfSellA)
-                                print(remainA)
-                                print()
+                                revenueA += (priceA - srBuyA[1]) * remainA
 
                                 if amountA < remainA:
-                                    dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'profit':[(priceA - srBuyA[1]) * amountA]})  # tax
-                                    dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
+                                    dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'revenue':[(priceA - srBuyA[1]) * remainA]})
+                                    dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
                                     ramain -= amountA
-
-                                    print(tickerA)
-                                    print(dfSellA)
-                                    print(remainA)
-                                    print()
+                                    revenueA += (priceA - srBuyA[1]) * remainA
                                     break
+
+                        # register dfTaxA
+                        if pd.Period(srA[0], freq='Y') != previousPeriodA:
+                            sumTax = (revenueA - 2500) * tax
+                            if sumTax < 0:
+                                sumTax = 0
+                            dfT = pd.DataFrame({'year':[previousPeriodA], 'revenue':[revenueA], 'tax':[sumTax], 'profit':[revenueA - sumTax]})
+                            dfTaxA = pd.concat([dfTaxA, dfT], ignore_index = True, axis = 0)
+                            print(tickerA)
+                            print(dfTaxA)
+                            previousPeriodA = pd.Period(srA[0], freq='Y')
+
+
 
                         amountB = ((amountA * priceA) + cashBalance) // priceB
 
-                        stockBalanceB += amountB  ######################################################################## buy tickerB
+                        stockBalanceB += amountB  ######################################## buy tickerB
 
-                        dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB]})  # tax
-                        dfBuyB = pd.concat([dfBuyB, dfT], ignore_index = True, axis = 0)                                 # tax
-                        print(tickerB)
-                        print(dfBuyB)
-                        print()
+                        dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB]})
+                        dfBuyB = pd.concat([dfBuyB, dfT], ignore_index = True, axis = 0)
 
                         cashBalance = (amountA * priceA + cashBalance) % priceB
 
                         while (((amountA * priceA) + (amountB * priceB)) * fee) > cashBalance:  # fee
                             stockBalanceA -= 1                                                  # fee
                             cashBalance += priceA                                               # fee
+
                         cashBalance -= ((amountB * priceB) + (amountA * priceA)) * fee          # fee
                         sumFee += ((amountB * priceB) + (amountA * priceA)) * fee               # fee
-
                         balance = balanceA + balanceB + cashBalance
 
                         if (balance / capital) > maxYield:
@@ -209,7 +208,7 @@ def rebal(tickerA, tickerB):
                         if amountB > stockBalanceB:
                             amountB = stockBalanceB
 
-                        stockBalanceB -= amountB  ################################################################################################################################################## sell tickerB
+                        stockBalanceB -= amountB  ######################################## sell tickerB
 
                         if onceB:
                             srBuyB = dfBuyB.iloc[flagB]
@@ -217,73 +216,68 @@ def rebal(tickerA, tickerB):
                             onceB = False
 
                         if amountB < remainB:
-                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'profit':[(priceB - srBuyB[1]) * amountB]})  # tax
-                            dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
+                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'revenue':[(priceB - srBuyB[1]) * amountB]})
+                            dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
                             remainB -= amountB
-
-                            print(tickerB)
-                            print(dfSellB)
-                            print(remainB)
-                            print()
+                            revenueB += (priceB - srBuyB[1]) * amountB
 
                         elif amountB == remainB:
-                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'profit':[(priceB - srBuyB[1]) * amountB]})  # tax
-                            dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
+                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'revenue':[(priceB - srBuyB[1]) * amountB]})
+                            dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
                             remainB = 0
                             flagB += 1
-
-                            print(tickerB)
-                            print(dfSellB)
-                            print(remainB)
-                            print()
+                            revenueB += (priceB - srBuyB[1]) * amountB
 
                         else:
                             while amountB > remainB:
-                                dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[remainB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'profit':[(priceB - srBuyB[1]) * remainB]})  # tax
-                                dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
-
+                                dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[remainB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'revenue':[(priceB - srBuyB[1]) * remainB]})
+                                dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
                                 amountB -= remainB
-
                                 flagB += 1
-                                # print('here!!!', flagB)
                                 srBuyB = dfBuyB.iloc[flagB]
                                 remainB = srBuyB[2]
-
-                                print(tickerB)
-                                print(dfSellB)
-                                print(remainB)
-                                print()
+                                revenueB += (priceB - srBuyB[1]) * remainB
 
                                 if amountB < remainB:
-                                    dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'profit':[(priceB - srBuyB[1]) * amountB]})  # tax
-                                    dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)                                                                                                     # tax
+                                    dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[amountB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'revenue':[(priceB - srBuyB[1]) * amountB]})
+                                    dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
                                     remainB -= amountB
-
-                                    print(tickerB)
-                                    print(dfSellB)
-                                    print(remainB)
-                                    print()
+                                    revenueB += (priceB - srBuyB[1]) * amountB
                                     break
+
+                        # register dfTaxB
+                        if pd.Period(srB[0], freq='Y') != previousPeriodB:
+                            sumTax = (revenueB - 2500) * tax
+                            if sumTax < 0:
+                                sumTax = 0
+                            dfT = pd.DataFrame({'year':[previousPeriodB], 'revenue':[revenueB], 'tax':[sumTax], 'profit':[revenueB - sumTax]})
+                            dfTaxB = pd.concat([dfTaxB, dfT], ignore_index = True, axis = 0)
+                            print(tickerB)
+                            print(dfTaxB)
+                            previousPeriodB = pd.Period(srB[0], freq='Y')
+
+
+
+
+
+
+
 
                         amountA = (amountB * priceB + cashBalance) // priceA
 
-                        stockBalanceA += amountA  ######################################################################## buy tickerA
+                        stockBalanceA += amountA  ######################################## buy tickerA
 
-                        dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA]})  # tax
-                        dfBuyA = pd.concat([dfBuyA, dfT], ignore_index = True, axis = 0)                                 # tax
-
-                        print(tickerA)
-                        print(dfBuyA)
-                        print()
+                        dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA]})
+                        dfBuyA = pd.concat([dfBuyA, dfT], ignore_index = True, axis = 0)
 
                         cashBalance = (amountB * priceB + cashBalance) % priceA
 
                         while (((amountB * priceB) + (amountA * priceA)) * fee) > cashBalance:  # fee
                             stockBalanceB -= 1                                                  # fee
                             cashBalance += priceB                                               # fee
+
                         cashBalance -= ((amountB * priceB) + (amountA * priceA)) * fee          # fee
                         sumFee += ((amountB * priceB) + (amountA * priceA)) * fee               # fee
-
                         balance = balanceA + balanceB + cashBalance
 
                         if (balance / capital) > maxYield:
@@ -293,7 +287,16 @@ def rebal(tickerA, tickerB):
                         if log:
                             print(srA[0], int(stockBalanceA), ',' ,int(stockBalanceB), ',' ,int(maxYield))
 
+                print(tickerA)
+                print(dfSellA)
+                print()
+                print(tickerB)
+                print(dfSellB)
+                print()
                 print('sumFee', int(sumFee))
+                print()
+                print('revenueA', revenueA)
+                print('revenueB', revenueB)
                 print()
                 print('max', maxDate, int(maxYield))
                 print()
