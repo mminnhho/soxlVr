@@ -47,6 +47,7 @@ def rebal(tickerA, tickerB):
     dfO = pd.DataFrame(columns = ['virtualAsset', 'tickerA', 'tickerB', 'threshold', 'maxYield'])
 
     fee = 0.0007
+    sumFee = 0
     tax = 0.2 + 0.02
 
     capital = 100000
@@ -177,6 +178,7 @@ def rebal(tickerA, tickerB):
                             stockBalanceA -= 1                                                  # fee
                             cashBalance += priceA                                               # fee
                         cashBalance -= ((amountB * priceB) + (amountA * priceA)) * fee          # fee
+                        sumFee += ((amountB * priceB) + (amountA * priceA)) * fee               # fee
 
                         balance = balanceA + balanceB + cashBalance
 
@@ -218,6 +220,7 @@ def rebal(tickerA, tickerB):
                             stockBalanceB -= 1                                                  # fee
                             cashBalance += priceB                                               # fee
                         cashBalance -= ((amountB * priceB) + (amountA * priceA)) * fee          # fee
+                        sumFee += ((amountB * priceB) + (amountA * priceA)) * fee               # fee
 
                         balance = balanceA + balanceB + cashBalance
 
@@ -228,7 +231,8 @@ def rebal(tickerA, tickerB):
                         if log:
                             print(srA[0], int(stockBalanceA), ',' ,int(stockBalanceB), ',' ,int(maxYield))
 
-                print('max', maxDate, "%4d"%(maxYield))
+                print(int(sumFee))
+                print('max', maxDate, int(maxYield))
                 print()
 
                 balanceA = priceA * stockBalanceA
