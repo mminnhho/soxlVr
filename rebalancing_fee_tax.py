@@ -46,9 +46,14 @@ def rebal(tickerA, tickerB):
     dfB = pd.read_csv(tickerB + "_" + tickerA + "_synced.csv")
     dfO = pd.DataFrame(columns = ['virtualAsset', 'tickerA', 'tickerB', 'threshold', 'maxYield'])
 
+    # fee = 0
+    # tax = 0
     fee = 0.0007
-    sumFee = 0
     tax = 0.2 + 0.02
+
+    virtualAsset = [(1/100) * x for x in range(150, 151, 10)]
+    proportionA  = [(1/100) * x for x in range(83, 84)]
+    threshold    = [(1/100) * x for x in range(5, 6)]
 
     capital = 100000
     stockBalanceA = 0
@@ -57,10 +62,8 @@ def rebal(tickerA, tickerB):
     balanceB = 0
     cashBalance = 0
     balance = 0
+    sumFee = 0
 
-    virtualAsset = [(1/10) * x for x in range(7, 8)]
-    proportionA = [(1/100) * x for x in range(94, 95)]
-    threshold = [(1/100) * x for x in range(2, 3)]
 
     log = (len(virtualAsset) == 1) and (len(proportionA) == 1) and (len(threshold) == 1)
     # log = False
@@ -72,9 +75,12 @@ def rebal(tickerA, tickerB):
 
             for t in threshold:
 
-                if log:
-                    print("%4.2f %4.2f %4.2f" % (a, p, t))
-                    print()
+
+                if t >= (1 - p):
+                    break
+
+
+
 
                 srA = dfA.iloc[0]
                 srB = dfB.iloc[0]
@@ -126,17 +132,11 @@ def rebal(tickerA, tickerB):
                         dfT = pd.DataFrame({'year':[previousPeriodA], 'revenue':[revenueA], 'tax':[sumTax], 'profit':[revenueA - sumTax]})
                         dfTaxA = pd.concat([dfTaxA, dfT], ignore_index = True, axis = 0)
 
-                        print('stockBalanceA', stockBalanceA)
-                        print('cashBalance', cashBalance)
-                        print('sumTax', (balanceA / balance) * sumTax)
                         while cashBalance < ((balanceA / balance) * sumTax):
                             stockBalanceA -= 1
                             cashBalance += (priceA * (1 - fee))
-                        print('cashBalance', cashBalance)
-                        cashBalance -= sumTax
-                        print('stockBalanceA', stockBalanceA)
-                        print('cashBalance', cashBalance)
 
+                        cashBalance -= ((balanceA / balance) * sumTax)
                         previousPeriodA = pd.Period(srA[0], freq='Y')
 
                     if pd.Period(srB[0], freq='Y') != previousPeriodB:  ######################################## taxB
@@ -146,20 +146,14 @@ def rebal(tickerA, tickerB):
                         dfT = pd.DataFrame({'year':[previousPeriodB], 'revenue':[revenueB], 'tax':[sumTax], 'profit':[revenueB - sumTax]})
                         dfTaxB = pd.concat([dfTaxB, dfT], ignore_index = True, axis = 0)
 
-                        print('stockBalanceB', stockBalanceB)
-                        print('cashBalance', cashBalance)
-                        print('sumTax', (balanceB / balance) * sumTax)
                         while cashBalance < ((balanceB / balance) * sumTax):
                             stockBalanceB -= 1
                             cashBalance += (priceB * (1 - fee))
-                        print('cashBalance', cashBalance)
-                        cashBalance -= sumTax
-                        print('stockBalanceB', stockBalanceB)
-                        print('cashBalance', cashBalance)
 
+                        cashBalance -= ((balanceB / balance) * sumTax)
                         previousPeriodB = pd.Period(srB[0], freq='Y')
 
-                    if ((balanceA / balance) - p) > t:
+                    if ((balanceA / balance) - p) > t:  ######################################## sell tickerA
                         amountA = ((balanceA - (balance * p)) // priceA) + 1
                         amountA *= a
                         amountA = int(amountA)
@@ -167,7 +161,7 @@ def rebal(tickerA, tickerB):
                         if amountA > stockBalanceA:
                             amountA = stockBalanceA
 
-                        stockBalanceA -= amountA  ######################################## sell tickerA
+                        stockBalanceA -= amountA
 
                         if onceA:
                             srBuyA = dfBuyA.iloc[flagA]
@@ -192,7 +186,15 @@ def rebal(tickerA, tickerB):
                                 dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[remainA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'revenue':[(priceA - srBuyA[1]) * remainA]})
                                 dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
                                 amountA -= remainA
+
+
+
+
                                 flagA += 1
+
+
+
+
                                 srBuyA = dfBuyA.iloc[flagA]
                                 remainA = srBuyA[2]
                                 revenueA += (priceA - srBuyA[1]) * remainA
@@ -200,7 +202,7 @@ def rebal(tickerA, tickerB):
                                 if amountA < remainA:
                                     dfT = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[amountA], 'buyDate':[srBuyA[0]], 'buyPrice':[srBuyA[1]], 'revenue':[(priceA - srBuyA[1]) * remainA]})
                                     dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
-                                    ramain -= amountA
+                                    remainA -= amountA
                                     revenueA += (priceA - srBuyA[1]) * remainA
                                     break
 
@@ -219,9 +221,14 @@ def rebal(tickerA, tickerB):
 
                         cashBalance -= ((amountB * priceB) + (amountA * priceA)) * fee          # fee
                         sumFee += ((amountB * priceB) + (amountA * priceA)) * fee               # fee
+                        print(sumFee)
+
+
+
+                        
                         balance = balanceA + balanceB + cashBalance
 
-                    elif ((balanceB / balance) - proportionB) > t:
+                    elif ((balanceB / balance) - proportionB) > t:  ######################################## sell tickerB
                         amountB = ((balanceB - (balance * proportionB)) // priceB) + 1
                         amountB *= a
                         amountB = int(amountB)
@@ -229,7 +236,7 @@ def rebal(tickerA, tickerB):
                         if amountB > stockBalanceB:
                             amountB = stockBalanceB
 
-                        stockBalanceB -= amountB  ######################################## sell tickerB
+                        stockBalanceB -= amountB
 
                         if onceB:
                             srBuyB = dfBuyB.iloc[flagB]
@@ -254,7 +261,23 @@ def rebal(tickerA, tickerB):
                                 dfT = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[remainB], 'buyDate':[srBuyB[0]], 'buyPrice':[srBuyB[1]], 'revenue':[(priceB - srBuyB[1]) * remainB]})
                                 dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
                                 amountB -= remainB
+
+
                                 flagB += 1
+                                # print(dfBuyB.last_valid_index())
+                                # need to fix
+
+                                # if dfBuyB.last_valid_index() < flagB:
+                                #     flagB -= 1
+                                #     break
+
+
+                                # print('=====>', flagB)
+                                print(dfBuyB)
+                                print(dfSellB)
+
+
+
                                 srBuyB = dfBuyB.iloc[flagB]
                                 remainB = srBuyB[2]
                                 revenueB += (priceB - srBuyB[1]) * remainB
@@ -281,6 +304,11 @@ def rebal(tickerA, tickerB):
 
                         cashBalance -= ((amountB * priceB) + (amountA * priceA)) * fee          # fee
                         sumFee += ((amountB * priceB) + (amountA * priceA)) * fee               # fee
+                        print(sumFee)
+
+
+
+
                         balance = balanceA + balanceB + cashBalance
 
                     if (balance / capital) > maxYield:
@@ -312,6 +340,9 @@ def rebal(tickerA, tickerB):
                     print('max', maxDate, int(maxYield))
                     print()
 
+                print("%4.2f"%(a), "%4.2f"%(p), "%4.2f"%(t), str(int(maxYield)) + 'x')
+                print()
+
                 balanceA = priceA * stockBalanceA
                 balanceB = priceB * stockBalanceB
                 balance = balanceA + balanceB + cashBalance
@@ -327,15 +358,15 @@ def sort(tickerA, tickerB):
     df.sort_values(by=['maxYield'], inplace=True, ascending=False)
     df.to_csv(tickerA + "_" + tickerB + "_sorted.csv", index=False)
     sr = df.iloc[0]
-    print('virtualAsset', sr[0], tickerA, sr[1], tickerB, sr[2], 'threshold', sr[3], 'maxYield', "%4d"%(sr[4]))
+    print(tickerA, sr[1], '  ', tickerB, sr[2], '  ', 'virtualAsset', sr[0], '  ', 'threshold', sr[3], '  ', 'maxYield', str("%4d"%(sr[4])) + 'x')
     print()
 
 
 def main(tickerA, tickerB):
-    # pathA = "D:/soxlVr/" + tickerA + "_" + tickerB + "_synced.csv"
-    # pathB = "D:/soxlVr/" + tickerB + "_" + tickerA + "_synced.csv"
-    pathA = "C:/dell/python/backtesting/soxlVr/" + tickerA + "_" + tickerB + "_synced.csv"
-    pathB = "C:/dell/python/backtesting/soxlVr/" + tickerB + "_" + tickerA + "_synced.csv"
+    pathA = "D:/soxlVr/" + tickerA + "_" + tickerB + "_synced.csv"
+    pathB = "D:/soxlVr/" + tickerB + "_" + tickerA + "_synced.csv"
+    # pathA = "C:/dell/python/backtesting/soxlVr/" + tickerA + "_" + tickerB + "_synced.csv"
+    # pathB = "C:/dell/python/backtesting/soxlVr/" + tickerB + "_" + tickerA + "_synced.csv"
 
     if (os.path.isfile(pathA)==False) or (os.path.isfile(pathB)==False):
         sync(tickerA, tickerB)
