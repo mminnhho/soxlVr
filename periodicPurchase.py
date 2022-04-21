@@ -10,8 +10,7 @@ import pandas as pd
 
 ticker = 'TQQQ'
 cashFlow = 500
-
-dfO = pd.DataFrame(columns=['date', 'price', 'amount', 'cash', 'balance', 'capital'])
+feeRate = 0.0007
 
 df = pd.read_csv(ticker + '.csv')
 
@@ -20,15 +19,17 @@ for i in range(0, len(df)):
 		sr  = df.iloc[i]
 		month = pd.Period(sr[0], freq='M')
 		if month != previousMonth:
-			amount = cashFlow // sr[4]
-			stockSum += amount
-			cash = cashFlow - (sr[4] * amount)
-			balance = (sr[4] * stockSum) + cash
+			quantity = int(cashFlow / (sr[4] * (1 + feeRate)))
+			sumStock += quantity
+			fee = (sr[4] * quantity) * feeRate
+			cash = cashFlow - (sr[4] * quantity) - fee
+			balance = (sr[4] * sumStock) + cash
 			capital += cashFlow
 
-			dfT = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'amount':["%7d"%(stockSum)], 'cash':["%7.2f"%(cash)], 'balance':["%10d"%(balance)], 'capital':["%7d"%(capital)]})
+			dfT = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)]})
 			dfO = pd.concat([dfO, dfT], ignore_index=False, axis=0)
 
+			sumFee += fee
 			previousMonth = month
 
 		else:
@@ -37,16 +38,18 @@ for i in range(0, len(df)):
 	else:
 		sr  = df.iloc[i]
 		month = pd.Period(sr[0], freq='M')
-		amount = 0
-		amount = cashFlow // sr[4]
-		stockSum = amount
-		cash = cashFlow - (sr[4] * amount)
-		balance = (sr[4] * stockSum) + cash
+		quantity = int(cashFlow / (sr[4] * (1 + feeRate)))
+		sumStock = quantity
+		fee = (sr[4] * quantity) * feeRate
+		cash = cashFlow - (sr[4] * quantity) - fee
+		balance = (sr[4] * sumStock) + cash
 		capital = cashFlow
 		
-		dfT = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'amount':["%7d"%(stockSum)], 'cash':["%7.2f"%(cash)], 'balance':["%10d"%(balance)], 'capital':["%7d"%(capital)]})
-		dfO = pd.concat([dfO, dfT], ignore_index=False, axis=0)
+		dfO = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)]})
 
+		sumFee = fee
 		previousMonth = pd.Period(sr[0], freq='M')
 
 dfO.to_csv(ticker + '_periodicPurchase.csv', index=False)
+print('sumFee', int(sumFee))
+print('maxYield', int(balance / capital))

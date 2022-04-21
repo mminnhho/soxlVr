@@ -57,9 +57,9 @@ def rebal(tickerA, tickerB):
     cashBalance = 0
     balance = 0
 
-    virtualAsset = [(1/10) * x for x in range(7, 10)]
-    proportionA = [(1/100) * x for x in range(92, 95)]
-    threshold = [(1/100) * x for x in range(1, 3)]
+    virtualAsset = [(1/100) * x for x in range(70, 71, 10)]
+    proportionA  = [(1/100) * x for x in range(80, 81)]
+    threshold    = [(1/100) * x for x in range(1, 2)]
 
     log = (len(virtualAsset) == 1) and (len(proportionA) == 1) and (len(threshold) == 1)
 
@@ -83,6 +83,12 @@ def rebal(tickerA, tickerB):
                 maxYield = balance / capital
                 maxDate = srA[0]
 
+                dfBuyA = pd.DataFrame({'date':[srA[0]], 'price':[priceA], 'amount':[stockBalanceA]})
+                dfBuyB = pd.DataFrame({'date':[srB[0]], 'price':[priceB], 'amount':[stockBalanceB]})
+                
+                dfSellA = pd.DataFrame(columns = ['date', 'price', 'amount', 'buyDate', 'buyPrice', 'revenue'])
+                dfSellB = dfSellA
+
                 for i in range(1, len(dfA)):
 
                     srA = dfA.iloc[i]
@@ -99,9 +105,9 @@ def rebal(tickerA, tickerB):
                         amountA = int(amountA)
 
                         if amountA > stockBalanceA:
-                            amountA = stockBalanceA
+                            amountA = stockBalanceA  # <========================================== reasonable?
 
-                        stockBalanceA -= amountA
+                        stockBalanceA -= amountA  # <================================ 0:100
                         amountB = (amountA * priceA + cashBalance) // priceB
                         stockBalanceB += amountB
                         cashBalance = (amountA * priceA + cashBalance) % priceB
