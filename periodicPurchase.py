@@ -11,6 +11,7 @@ import pandas as pd
 ticker = 'TQQQ'
 cashFlow = 500
 feeRate = 0.0007
+maxYield = 0
 
 df = pd.read_csv(ticker + '.csv')
 
@@ -30,6 +31,9 @@ for i in range(0, len(df)):
 			dfO = pd.concat([dfO, dfT], ignore_index=False, axis=0)
 
 			sumFee += fee
+			if (balance / capital) > maxYield:
+				maxYield = balance / capital
+			
 			previousMonth = month
 
 		else:
@@ -48,8 +52,11 @@ for i in range(0, len(df)):
 		dfO = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)]})
 
 		sumFee = fee
+		if (balance / capital) > maxYield:
+			maxYield = balance / capital
+
 		previousMonth = pd.Period(sr[0], freq='M')
 
 dfO.to_csv(ticker + '_periodicPurchase.csv', index=False)
 print('sumFee', int(sumFee))
-print('maxYield', int(balance / capital))
+print('maxYield', int(maxYield))

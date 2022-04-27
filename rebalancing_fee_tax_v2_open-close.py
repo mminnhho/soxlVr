@@ -6,6 +6,7 @@ when no fee, no tax: 2010-2022 1.0 89:11 2% x134 (max x196 55.2%Y)
 noticeable: 2010-2022 1.5 89:11 5% x166 (max x207 55.9%Y)
 rebalancing price: close
 start date: 2010.2.18. (highest close price of the month)
+open price, close price
 """
 
 import pandas as pd
@@ -48,13 +49,13 @@ def rebal(tickerA, tickerB):
     dfO = pd.DataFrame(columns = ['V_Asset', 'tickerA', 'tickerB', 'threshold', 'maxYield'])
 
     # F_Rate = 0
-    T_Rate = 0
+    # T_Rate = 0
     F_Rate = 0.0007  # fee rate
-    # T_Rate = 0.2 + 0.02  # tax rate
+    T_Rate = 0.2 + 0.02  # tax rate
 
-    V_Asset     = [(1/100) * x for x in range(50, 201, 5)]
-    proportionA = [(1/100) * x for x in range(60, 91, 5)]
-    threshold   = [(1/1000) * x for x in range(1, 41)]
+    V_Asset     = [(1/100) * x for x in range(100, 101)]
+    proportionA = [(1/100) * x for x in range(89, 90)]
+    threshold   = [(1/100) * x for x in range(3, 11)]
 
     capital    = 100000
     S_BalanceA = 0  # stock balance
@@ -65,11 +66,11 @@ def rebal(tickerA, tickerB):
     B_Flag     = False  # break flag
 
 
-    # log = (len(V_Asset) == 1) and (len(proportionA) == 1) and (len(threshold) == 1)
-    log = False
+    log = (len(V_Asset) == 1) and (len(proportionA) == 1) and (len(threshold) == 1)
+    # log = False
 
     maxYield = balance / capital
-    aa, pp, tt, Yield= 0, 0, 0, 0
+    aa, pp, tt = 0, 0, 0
     Date = '1900-01-01'
 
     for a in V_Asset:
@@ -120,7 +121,6 @@ def rebal(tickerA, tickerB):
                 remainB = 0
                 revenueA = 0
                 revenueB = 0
-                yieldNow = 0
 
                 onceA = True
                 onceB = True
@@ -171,146 +171,140 @@ def rebal(tickerA, tickerB):
                     balanceB = srB[4] * S_BalanceB
                     balance = balanceA + balanceB + C_Balance
 
-                    if (((balanceA / balance) - p) * 2) > t:  # sell tickerA, buy tickerB =======================================
-                        quantityA = int(((balanceA - (balance * p)) / srA[4]) * (1 + F_Rate) * a) + 1  # sell tickerA =======================================
+                    for j in [1, 4]:  # open price, close price =======================================
 
-                        if quantityA > S_BalanceA:
-                            quantityA = S_BalanceA
+                        if (((balanceA / balance) - p) * 2) > t:  # sell tickerA, buy tickerB =======================================
+                            quantityA = int(((balanceA - (balance * p)) / srA[j]) * (1 + F_Rate) * a) + 1  # sell tickerA =======================================
 
-                        S_BalanceA -= quantityA
-                        feeA = (srA[4] * quantityA) * F_Rate
-                        C_Balance = C_Balance + (srA[4] * quantityA) - feeA
+                            if quantityA > S_BalanceA:
+                                quantityA = S_BalanceA
 
-                        if onceA:
-                            srBuyA = dfBuyA.iloc[flagA]
-                            remainA = srBuyA[2]
-                            onceA = False
+                            S_BalanceA -= quantityA
+                            feeA = (srA[j] * quantityA) * F_Rate
+                            C_Balance = C_Balance + (srA[j] * quantityA) - feeA
 
-                        while quantityA > remainA:
-                            remainQuantityA = quantityA - remainA
-                            quantityA = remainA
+                            if onceA:
+                                srBuyA = dfBuyA.iloc[flagA]
+                                remainA = srBuyA[2]
+                                onceA = False
 
-                            amount = srA[4] * quantityA
-                            revenueA = (srA[4] - srBuyA[1]) * quantityA - feeA
+                            while quantityA > remainA:
+                                remainQuantityA = quantityA - remainA
+                                quantityA = remainA
 
-                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[srA[4]], 'quantity':[quantityA], 'dateBought':[srBuyA[0]], 'priceBought':[srBuyA[4]], 'amount':[amount], 'fee':[feeA], 'revenue':[revenueA]})
+                                amount = srA[j] * quantityA
+                                revenueA = (srA[j] - srBuyA[1]) * quantityA - feeA
+
+                                dfT = pd.DataFrame({'date':[srA[0]], 'price':[srA[j]], 'quantity':[quantityA], 'dateBought':[srBuyA[0]], 'priceBought':[srBuyA[4]], 'amount':[amount], 'fee':[feeA], 'revenue':[revenueA]})
+                                dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
+
+                                quantityA = remainQuantityA
+
+                                flagA += 1
+                                if dfBuyA.last_valid_index() < flagA:
+                                        B_Flag = True
+                                        break
+
+                                srBuyA = dfBuyA.iloc[flagA]
+                                remainA = srBuyA[2]
+
+                            if quantityA < remainA:
+                                remainA -= quantityA
+
+                            if quantityA == remainA:
+                                flagA += 1
+                                if dfBuyA.last_valid_index() < flagA:
+                                        B_Flag = True
+                                        break
+
+                                srBuyA = dfBuyA.iloc[flagA]
+                                remainA = srBuyA[2]
+
+                            amount = srA[j] * quantityA
+                            revenueA = (srA[j] - srBuyA[1]) * quantityA - feeA
+
+                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[srA[j]], 'quantity':[quantityA], 'dateBought':[srBuyA[0]], 'priceBought':[srBuyA[4]], 'amount':[amount], 'fee':[feeA], 'revenue':[revenueA]})
                             dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
 
-                            quantityA = remainQuantityA
+                            quantityB = int(C_Balance / (srB[j] * (1 + F_Rate)))  # buy tickerB =======================================
+                            # print('C_Balance buy tickerB', C_Balance)
+                            S_BalanceB += quantityB
+                            amount = srB[j] * quantityB
+                            feeB = (srB[j] * quantityB) * F_Rate
+                            C_Balance = C_Balance - (srB[j] * quantityB) - feeB
 
-                            flagA += 1
-                            if dfBuyA.last_valid_index() < flagA:
-                                    B_Flag = True
-                                    break
-
-                            srBuyA = dfBuyA.iloc[flagA]
-                            remainA = srBuyA[2]
-
-                        if quantityA < remainA:
-                            remainA -= quantityA
-
-                        if quantityA == remainA:
-                            flagA += 1
-                            if dfBuyA.last_valid_index() < flagA:
-                                    B_Flag = True
-                                    break
-
-                            srBuyA = dfBuyA.iloc[flagA]
-                            remainA = srBuyA[2]
-
-                        amount = srA[4] * quantityA
-                        revenueA = (srA[4] - srBuyA[1]) * quantityA - feeA
-
-                        dfT = pd.DataFrame({'date':[srA[0]], 'price':[srA[4]], 'quantity':[quantityA], 'dateBought':[srBuyA[0]], 'priceBought':[srBuyA[4]], 'amount':[amount], 'fee':[feeA], 'revenue':[revenueA]})
-                        dfSellA = pd.concat([dfSellA, dfT], ignore_index = True, axis = 0)
-
-                        # print(srA[0], balance)
-
-                        quantityB = int(C_Balance / (srB[4] * (1 + F_Rate)))  # buy tickerB =======================================
-                        # print('C_Balance buy tickerB', C_Balance)
-                        S_BalanceB += quantityB
-                        amount = srB[4] * quantityB
-                        feeB = (srB[4] * quantityB) * F_Rate
-                        C_Balance = C_Balance - (srB[4] * quantityB) - feeB
-
-                        dfT = pd.DataFrame({'date':[srB[0]], 'price':[srB[4]], 'quantity':[quantityB], 'amount':[amount], 'fee':[feeB]})
-                        dfBuyB = pd.concat([dfBuyB, dfT], ignore_index = True, axis = 0)
+                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[srB[j]], 'quantity':[quantityB], 'amount':[amount], 'fee':[feeB]})
+                            dfBuyB = pd.concat([dfBuyB, dfT], ignore_index = True, axis = 0)
 
 
 
-                    if (((balanceB / balance) - proportionB) * 2) > t:  # sell tickerB, buy tickerA =======================================
-                        quantityB = int(((balanceB - (balance * proportionB)) / srB[4]) * (1 + F_Rate) * a) + 1  # sell tickerB =======================================
+                        if (((balanceB / balance) - proportionB) * 2) > t:  # sell tickerB, buy tickerA =======================================
+                            quantityB = int(((balanceB - (balance * proportionB)) / srB[j]) * (1 + F_Rate) * a) + 1  # sell tickerB =======================================
 
-                        if quantityB > S_BalanceB:
-                            quantityB = S_BalanceB
+                            if quantityB > S_BalanceB:
+                                quantityB = S_BalanceB
 
-                        S_BalanceB -= quantityB
-                        feeB = (srB[4] * quantityB) * F_Rate
-                        C_Balance = C_Balance + (srB[4] * quantityB) - feeB
+                            S_BalanceB -= quantityB
+                            feeB = (srB[j] * quantityB) * F_Rate
+                            C_Balance = C_Balance + (srB[j] * quantityB) - feeB
 
-                        if onceB:
-                            srBuyB = dfBuyB.iloc[flagB]
-                            remainB = srBuyB[2]
-                            onceB = False
+                            if onceB:
+                                srBuyB = dfBuyB.iloc[flagB]
+                                remainB = srBuyB[2]
+                                onceB = False
 
-                        while quantityB > remainB:
-                            remainQuantityB = quantityB - remainB
-                            quantityB = remainB
+                            while quantityB > remainB:
+                                remainQuantityB = quantityB - remainB
+                                quantityB = remainB
 
-                            amount = srB[4] * quantityB
-                            revenueB = (srB[4] - srBuyB[1]) * quantityB - feeB
+                                amount = srB[j] * quantityB
+                                revenueB = (srB[j] - srBuyB[1]) * quantityB - feeB
 
-                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[srB[4]], 'quantity':[quantityB], 'dateBought':[srBuyB[0]], 'priceBought':[srBuyB[4]], 'amount':[amount], 'fee':[feeB], 'revenue':[revenueB]})
+                                dfT = pd.DataFrame({'date':[srB[0]], 'price':[srB[j]], 'quantity':[quantityB], 'dateBought':[srBuyB[0]], 'priceBought':[srBuyB[4]], 'amount':[amount], 'fee':[feeB], 'revenue':[revenueB]})
+                                dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
+
+                                quantityA = remainQuantityB
+
+                                flagB += 1
+                                if dfBuyB.last_valid_index() < flagB:
+                                        B_Flag = True
+                                        break
+
+                                srBuyB = dfBuyB.iloc[flagB]
+                                remainB = srBuyB[2]
+
+                            if quantityB < remainB:
+                                remainB -= quantityB
+
+                            if quantityB == remainB:
+                                flagB += 1
+                                if dfBuyB.last_valid_index() < flagB:
+                                        B_Flag = True
+                                        break
+
+                                srBuyB = dfBuyB.iloc[flagB]
+                                remainB = srBuyB[2]
+
+                            amount = srB[j] * quantityB
+                            revenueB = (srB[j] - srBuyB[1]) * quantityB - feeB
+
+                            dfT = pd.DataFrame({'date':[srB[0]], 'price':[srB[j]], 'quantity':[quantityB], 'dateBought':[srBuyB[0]], 'priceBought':[srBuyB[4]], 'amount':[amount], 'fee':[feeB], 'revenue':[revenueB]})
                             dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
 
-                            quantityA = remainQuantityB
+                            quantityA = int(C_Balance / (srA[j] * (1 + F_Rate)))  # buy tickerA =======================================
+                            S_BalanceA += quantityA
+                            amount = srA[j] * quantityA
+                            feeA = (srA[j] * quantityA) * F_Rate
+                            C_Balance = C_Balance - (srA[j] * quantityA) - feeA
 
-                            flagB += 1
-                            if dfBuyB.last_valid_index() < flagB:
-                                    B_Flag = True
-                                    break
+                            dfT = pd.DataFrame({'date':[srA[0]], 'price':[srA[j]], 'quantity':[quantityA], 'amount':[amount], 'fee':[feeA]})
+                            dfBuyA = pd.concat([dfBuyA, dfT], ignore_index = True, axis = 0)
 
-                            srBuyB = dfBuyB.iloc[flagB]
-                            remainB = srBuyB[2]
-
-                        if quantityB < remainB:
-                            remainB -= quantityB
-
-                        if quantityB == remainB:
-                            flagB += 1
-                            if dfBuyB.last_valid_index() < flagB:
-                                    B_Flag = True
-                                    break
-
-                            srBuyB = dfBuyB.iloc[flagB]
-                            remainB = srBuyB[2]
-
-                        amount = srB[4] * quantityB
-                        revenueB = (srB[4] - srBuyB[1]) * quantityB - feeB
-
-                        dfT = pd.DataFrame({'date':[srB[0]], 'price':[srB[4]], 'quantity':[quantityB], 'dateBought':[srBuyB[0]], 'priceBought':[srBuyB[4]], 'amount':[amount], 'fee':[feeB], 'revenue':[revenueB]})
-                        dfSellB = pd.concat([dfSellB, dfT], ignore_index = True, axis = 0)
-
-                        # print(srA[0], balance)
-
-                        quantityA = int(C_Balance / (srA[4] * (1 + F_Rate)))  # buy tickerA =======================================
-                        S_BalanceA += quantityA
-                        amount = srA[4] * quantityA
-                        feeA = (srA[4] * quantityA) * F_Rate
-                        C_Balance = C_Balance - (srA[4] * quantityA) - feeA
-
-                        dfT = pd.DataFrame({'date':[srA[0]], 'price':[srA[4]], 'quantity':[quantityA], 'amount':[amount], 'fee':[feeA]})
-                        dfBuyA = pd.concat([dfBuyA, dfT], ignore_index = True, axis = 0)
 
                     balanceA = srA[4] * S_BalanceA
                     balanceB = srB[4] * S_BalanceB
                     balance = balanceA + balanceB + C_Balance
-
-                    # print(srA[0], ', ', int(balance))
-
                     Yield = balance / capital
-                    if i == (len(dfA) - 1):
-                        yieldNow = Yield
                     sumFee = dfBuyA['fee'].sum() + dfBuyB['fee'].sum() + dfSellA['fee'].sum() + dfSellB['fee'].sum()
                 if log:
                     print(dfBuyA)
@@ -320,21 +314,22 @@ def rebal(tickerA, tickerB):
                     print(dfTaxA)
                     print(dfTaxB)
                     print('sumFee', int(sumFee))
-                    print('yieldNow', "%5.1f"%(yieldNow))
 
                 if not log:
-                    print('a', a, 'p', p, 't', t, 'Yield', "%5.1f"%(Yield))
+                    print('a', a, 'p', p, 't', t, 'Yield', int(Yield))
 
-                if (Yield > maxYield) or (int(Yield) == 0):
+                if Yield > maxYield:
                     maxYield = Yield
-                    aa, pp, tt = a, p, t
+                    aa = a
+                    pp = p
+                    tt = t
                     Date = srA[0]
 
-                dfT = pd.DataFrame({'V_Asset':["%5.2f"%(a)], 'tickerA':["%5.2f"%(p)], 'tickerB':["%5.2f"%(proportionB)], 'threshold':["%5.2f"%(t)], 'maxYield':["%5.1f"%(maxYield)]})
+                dfT = pd.DataFrame({'V_Asset':["%5.2f"%(a)], 'tickerA':["%5.2f"%(p)], 'tickerB':["%5.2f"%(proportionB)], 'threshold':["%5.2f"%(t)], 'maxYield':["%4d"%(maxYield)]})
                 dfO = pd.concat([dfO, dfT], ignore_index = True, axis = 0)
 
     dfO.to_csv(tickerA + "_" + tickerB + "_rebalanced.csv", index=False)
-    print('a', aa, 'p', pp, 't', tt, Date, 'maxYield', "%5.1f"%(maxYield))
+    print('a', aa, 'p', pp, 't', tt, Date, 'maxYield', int(maxYield))
 
 
 def sort(tickerA, tickerB):
