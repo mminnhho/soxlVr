@@ -1,14 +1,15 @@
 """
-buy and hold
+buy and hold: TQQQ only
 cost averaging
 buy 00% of cashBalance when drops by 00%
-cumulative rate 000x
+cumulative rate 39x
 monthly average rate 0.00%
 """
 
 import pandas as pd
 
-ticker = 'TQQQ'
+ticker = 'tqqq'
+# ticker = 'soxl'
 cashFlow = 500
 feeRate = 0.0007
 yyield = 0

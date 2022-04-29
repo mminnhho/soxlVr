@@ -26,12 +26,14 @@ for i in range(0, len(df)):
 			cash = cashFlow - (sr[4] * quantity) - fee
 			balance = (sr[4] * sumStock) + cash
 			capital += cashFlow
+			yyield = balance / capital
 
-			dfT = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)]})
+			dfT = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)], 'yield':["%3d"%(yyield)]})
 			dfO = pd.concat([dfO, dfT], ignore_index=False, axis=0)
 
 			sumFee += fee
 			if (balance / capital) > maxYield:
+				date = sr[0]
 				maxYield = balance / capital
 			
 			previousMonth = month
@@ -48,15 +50,17 @@ for i in range(0, len(df)):
 		cash = cashFlow - (sr[4] * quantity) - fee
 		balance = (sr[4] * sumStock) + cash
 		capital = cashFlow
+		yyield = balance / capital
 		
-		dfO = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)]})
+		dfO = pd.DataFrame({'date':[sr[0]], 'price':["%7.2f"%(sr[4])], 'quantity':["%6d"%(quantity)], 'sumStock':["%7d"%(sumStock)], 'cash':["%7.2f"%(cash)], 'fee':["%6.2f"%(fee)], 'balance':["%9d"%(balance)], 'capital':["%7d"%(capital)], 'yield':["%3d"%(yyield)]})
 
 		sumFee = fee
 		if (balance / capital) > maxYield:
+			date = sr[0]
 			maxYield = balance / capital
 
 		previousMonth = pd.Period(sr[0], freq='M')
 
 dfO.to_csv(ticker + '_periodicPurchase.csv', index=False)
-print('sumFee', int(sumFee))
-print('maxYield', int(maxYield))
+# print('sumFee', int(sumFee))
+print(date, 'maxYield', int(maxYield))
