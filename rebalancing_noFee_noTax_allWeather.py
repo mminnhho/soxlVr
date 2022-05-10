@@ -52,8 +52,8 @@ def rebal(ticker):
     # tax = 0.2 + 0.02
 
     capital = 100000
-    proportion = [(1/100) * x for x in range(61, 66)]  # proportion of first ticker(tqqq)
-    threshold = [(1/1000) * x for x in range(92, 97)]
+    proportion = [(1/100) * x for x in range(82, 83)]  # proportion of first ticker(tqqq)
+    threshold = [(1/1000) * x for x in range(46, 47)]
     maxxYield = 0
 
     log = (len(proportion) == 1) and (len(threshold) == 1)
@@ -142,8 +142,7 @@ def rebal(ticker):
                     dfO = pd.concat([dfO, dfT], ignore_index = True, axis = 0)
 
                     # if log:
-                    #     print(srTQQQ[0], quantityTQQQ, quantitySOXL, quantityTMF, quantityUGL, int(cashBalance), str(int(balance / capital)) + 'x')
-                    #     print()
+                    #     print(srTQQQ[0], quantityTQQQ, quantitySOXL, quantityTMF, quantityUGL, int(cashBalance), str(int(balance / capital)) + 'x\n')
 
                 if balance > maxBalance:
                     maxBalance = balance
