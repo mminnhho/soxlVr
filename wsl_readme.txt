@@ -26,3 +26,9 @@ exit
 
 exit
 
+adduser joey
+
+password: 
+
+login
+
